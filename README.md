@@ -1,0 +1,1 @@
+Implementation of the Wang(1994) Mixed Logistic Regression Models.
