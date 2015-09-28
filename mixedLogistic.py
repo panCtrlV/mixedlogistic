@@ -5,8 +5,8 @@ from likelihood import *
 from set_initial import *
 
 
-eps1 = 1e-3
-eps2 = 1e-3
+eps1 = 1e-6
+eps2 = 1e-6
 
 
 def mixedLogistic_Estep(vBetaAlpha_old, c, y, xm, xr, m):
