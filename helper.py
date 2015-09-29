@@ -61,3 +61,19 @@ def mapOptimizationVector2Matrices(vBetaAlpha, c, lxm):
     beta = np.matrix(vbeta).reshape((lxm, c-1), order='F')
     alpha = np.matrix(valpha).reshape(((n-d)/c, c), order='F')
     return beta, alpha
+
+
+def addBaselineCoefficientsAsZeros(coefMtx):
+    """
+    Append a 0 column to the input, which would be the coefficients for the baseline group.
+
+    :param coefMtx:
+        numpy matrix. If the covariate dimension is p, and number of components is c, then
+        the matrix is of size p * (c-1).
+    :return:
+        numpy matrix, of size p * c, where the last column contains all 0s.
+    """
+    m, n = coefMtx.shape
+    fullMtx = np.zeros((m, n+1))
+    fullMtx[:,:-1] = coefMtx
+    return fullMtx
