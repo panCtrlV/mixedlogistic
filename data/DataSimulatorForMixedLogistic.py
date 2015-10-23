@@ -1,9 +1,9 @@
-from preprocess import *
-from cal_condprob import *
-from helper import *
-import matplotlib.pyplot as plt
-import random
 from collections import Counter
+
+import matplotlib.pyplot as plt
+
+from mixedlogistic.cal_condprob import *
+from mixedlogistic.helper import *
 
 """
 Generating data from mixed logistic model
@@ -17,10 +17,24 @@ class DataSimulatorForMixedLogistic(object):
         self.dxr = dxr
         self.c = c
         self.m = m
+        self.xm = None
+        self.xr = None
+        self.y = None
+        self.beta = None
+        self.alpha = None
+        self.pMember = None
+        self.member = None
+        self.pComponent = None
 
     def simpleSimulator(self):
-        # generate xm from independent normal
-        _xm = np.random.normal(0., 1., self.n * self.dxm).reshape((self.n, self.dxm))
+        # generate xm from independent uniform
+        _xm = np.random.uniform(-2, 2, self.n * self.dxm).reshape((self.n, self.dxm))
+
+
+        # # generate xm from independent normal
+        # _xm = np.random.normal(0., 1., self.n * self.dxm).reshape((self.n, self.dxm))
+
+
         xm = addIntercept(_xm)
         # coefficients for mixing probabilities
         _beta = 0.1 * (np.arange(self.dxm + 1) + 1)
@@ -28,17 +42,22 @@ class DataSimulatorForMixedLogistic(object):
         for i in range(self.c - 1):
             _beta = np.delete(np.append(_beta, _beta[0]), 0)
             beta.append(_beta)
-        beta = addBaselineCoefficientsAsZeros(np.vstack(beta).T)
+        # beta = addBaselineCoefficientsAsZeros(np.vstack(beta).T)
+        beta = np.vstack(beta).T
         # Calculate the membership probabilities
-        pMember = cal_softmaxForData(xm, beta)
+        pMember = cal_softmaxForData(xm, addBaselineCoefficientsAsZeros(beta))
         u = np.random.uniform(size=self.n)
         _member = []
         for i in range(self.n):
             _member.append(np.sum([x < u[i] for x in pMember[i, :].cumsum()]))
         member = np.array(_member)  # 0-index
 
-        # generate xr from independent normal
-        _xr = np.random.normal(0., 1., self.n * self.dxr).reshape((self.n, self.dxr))
+        # generate xr from independent uniform
+        _xr = np.random.uniform(-2, 2, self.n * self.dxr).reshape((self.n, self.dxr))
+
+        # # generate xr from independent normal
+        # _xr = np.random.normal(0., 1., self.n * self.dxr).reshape((self.n, self.dxr))
+
         xr = addIntercept(_xr)
         # coefficient for the component probabilities
         _alpha = 0.2 * (np.arange(self.dxr + 1) + 1)
@@ -79,11 +98,11 @@ class DataSimulatorForMixedLogistic(object):
 
 
 # === Use class ====
-data = DataSimulatorForMixedLogistic(100, 3, 3, 3, 1)
-data.simpleSimulator()
+# data = DataSimulatorForMixedLogistic(100, 3, 3, 3, 1)
+# data.simpleSimulator()
 # data.plotResponse()
 # data.plotHistogramForComponentProbabilities()
-data.plotMembership()
+# data.plotMembership()
 
 
 # # === Constants ===

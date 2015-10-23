@@ -1,11 +1,11 @@
 import random
-import cal_condprob
+
 from data.heartscale import *
 import helper
 import mixedLogistic
 import preprocess
-import set_initial
-from mixedLogistic_test import *
+from mixedlogistic import set_initial
+from mixedlogistic.predict import *
 
 """
 Expeiment mixed logistic model on heart scale data from Cj Lin's distributed liblinear

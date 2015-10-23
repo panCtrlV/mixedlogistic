@@ -1,7 +1,8 @@
 __author__ = 'panc'
 
 import pandas as pd
-from preprocess import *
+
+from mixedlogistic.preprocess import *
 
 
 def import_data():

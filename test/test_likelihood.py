@@ -1,9 +1,12 @@
 __author__ = 'panc'
 
-from likelihood import *
-from mixedLogistic import mapOptimizationMatrices2Vector
-import numpy as np
 import unittest
+
+import numpy as np
+
+from mixedlogistic.likelihood import *
+from mixedLogistic import mapOptimizationMatrices2Vector
+
 
 class TestLikelihood(unittest.TestCase):
     def setUp(self):

@@ -1,16 +1,16 @@
-import cal_condprob
-from helper import *
-from preprocess import *
 import numpy as np
 
-__author__ = 'panc'
+import cal_condprob
+from helper import *
+
 
 """
-Prediction given the estimated results
+After a mixed logistic model is trained,
+make prediction on the test data and calculate performance measures.
 """
 
 
-def mixedLogistic_test(res, xmt, xrt, c, yt):
+def mixedLogistic_pred(res, xmt, xrt, c, yt):
     lxm = xmt.shape[1]
     b, a = mapOptimizationVector2Matrices(res['param'], c, lxm)
 
@@ -31,4 +31,4 @@ def mixedLogistic_test(res, xmt, xrt, c, yt):
     recall = truePositive.sum() * 1.0 / predictedTrue.sum()
     f1 = 2. * precision * recall / (precision + recall)
 
-    return dict(precision=precision, recall=recall, f1=f1)
+    return dict(pred=predictedLabels, precision=precision, recall=recall, f1=f1)

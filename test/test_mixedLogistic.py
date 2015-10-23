@@ -1,10 +1,10 @@
 __author__ = 'panc'
 
 import unittest
-from mixedLogistic import *
-from set_initial import *
+
+from mixedlogistic.set_initial import *
 from data.tribolium import *
-from helper import *
+from mixedlogistic.helper import *
 
 
 class TestMixedLogistic(unittest.TestCase):

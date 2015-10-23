@@ -49,7 +49,7 @@ def nollkForOptimization(c, y, xm, xr, m):
         """
         lxm = xm.shape[1]
         beta, alpha = mapOptimizationVector2Matrices(vBetaAlpha, c, lxm)
-        return  - ollk(y, xm, xr, m, beta, alpha)
+        return  -ollk(y, xm, xr, m, beta, alpha)
     return nollk
 
 
@@ -97,15 +97,52 @@ def ellk(y, xm, xr, m, beta_old, alpha_old, beta, alpha):
         It contains the current coefficient values for the component covariates.
     :return:
     """
+    threshold = 10e-100
+
     # pz depends on the previous estimates
     pz = cal_condProbOfComponentForData(y, xm, xr, m, beta_old, alpha_old)
     # the following two set of probabilities depend on the current parameter inputs
     pxb = np.matrix(cal_softmaxForData(xm, appendZeros(beta)))
     pbinom = cal_binomProbForData(y, xr, m, alpha)
 
+    # In case some probabilities are really small,
+    # they are excluded from the log-likelihood by
+    # assigning them to 1 so that their logarithms
+    # will be 0.
+    pxb[pxb < threshold] = 1.
+    pbinom[pbinom < threshold] = 1.
+
     q1 = np.multiply(pz, np.log(pxb)).sum()
     q2 = np.multiply(pz, np.log(pbinom)).sum()
+
     return q1 + q2
+
+
+# Actually, in terms of optimization q1 and q2 can be separated.
+# Since q1 and q2 share the same `pConditionalMembership`, it should
+# be calculated once in order to save computation.
+def ellk_separate(y, xm, xr, m, beta_old, alpha_old):
+    threshold = 10e-100
+
+    # conditional membership probabilities (depending on old parameter estimates)
+    pConditionalMembership = cal_condProbOfComponentForData(y, xm, xr, m, beta_old, alpha_old)
+
+    def q1(beta):
+        # membership probabilities for the hidden layer (depending on current parameters)
+        pxb = np.matrix(cal_softmaxForData(xm, appendZeros(beta)))
+        # ignore the probabilities that are too small
+        pxb[pxb < threshold] = 1.
+        return np.multiply(pConditionalMembership, np.log(pxb)).sum()
+
+    def q2(alpha):
+        # binomial probabilities for observed layer (depending on current parameters)
+        pbinom = cal_binomProbForData(y, xr, m, alpha)
+        # ignore the probabilities that are too small
+        pbinom[pbinom < threshold] = 1.
+        return np.multiply(pConditionalMembership, np.log(pbinom)).sum()
+
+    return q1, q2
+
 
 def nellkForOptimization(vBetaAlpha, vBetaAlpha_old, c, y, xm, xr, m):
     """
@@ -137,3 +174,22 @@ def nellkForOptimization(vBetaAlpha, vBetaAlpha_old, c, y, xm, xr, m):
     beta_old, alpha_old = mapOptimizationVector2Matrices(vBetaAlpha_old, c, lxm)
     beta, alpha = mapOptimizationVector2Matrices(vBetaAlpha, c, lxm)
     return -ellk(y, xm, xr, m, beta_old, alpha_old, beta, alpha)
+
+
+# Wrapper for `ellk_separate()` function
+def nellkForOptimization_separate(vparams_old, c, y, xm, xr, m):
+    lxm = xm.shape[1]
+    lxr = xr.shape[1]
+    beta_old, alpha_old = mapOptimizationVector2Matrices(vparams_old, c, lxm)
+
+    q1, q2 = ellk_separate(y, xm, xr, m, beta_old, alpha_old)  # two callables
+
+    def nq1(vbeta):
+        beta = mapVector2Matrix(vbeta, lxm)
+        return -q1(beta)
+
+    def nq2(valpha):
+        alpha = mapVector2Matrix(valpha, lxr)
+        return -q2(alpha)
+
+    return nq1, nq2

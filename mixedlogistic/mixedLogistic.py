@@ -55,8 +55,77 @@ def mixedLogistic_Mstep(nellk, vBetaAlpha0):
         Initial values of the parameters for the optimization.
     :return:
     """
-    res = sp.optimize.minimize(nellk, x0=vBetaAlpha0, method='BFGS')
+    # res = sp.optimize.minimize(nellk, x0=vBetaAlpha0, method='BFGS')
+    res = sp.optimize.minimize(nellk, x0=vBetaAlpha0, method='Nelder-Mead')
     return res.x, res.fun
+
+
+def mixedLogistic_EMtrain_separate(param0, c, y, xm, xr, m, maxIter = 500):
+    lxm = xm.shape[1]  # xm is obtained after pre-processing
+    param_old = param0  # initial guess of the parameters
+
+    # nellk0 = mixedLogistic_Estep(param_old, c, y, xm, xr, m)
+    # optfval_old = nellk0(param_old)
+
+    # --- Using negative observed log-likelihood as one of the convergence criteria ---
+    nollk = nollkForOptimization(c, y, xm, xr, m) # negative observed log-likelihood
+    nollkfval_old = nollk(param_old)
+
+    nIter = 0  # counter for number of EM iterations
+
+    while nIter < maxIter:
+        nIter += 1
+
+        print '\n', 'Iter', nIter, ':'
+
+        beta_old, alpha_old = mapOptimizationVector2Matrices(param_old, c, lxm)
+        vbeta_old = mapMatrix2Vector(beta_old)
+        valpha_old = mapMatrix2Vector(alpha_old)
+
+        # --- E-step ---
+        nq1, nq2 = nellkForOptimization_separate(param_old, c, y, xm, xr, m)
+
+        # --- M-step ---
+        # Minimize `nq1` and `nq2` separately
+        vbeta, optfval_nq1 = mixedLogistic_Mstep(nq1, vbeta_old)
+        valpha, optfval_nq2 = mixedLogistic_Mstep(nq2, valpha_old)
+        param = np.concatenate((vbeta, valpha))
+
+        print '\t updated parameters: '
+        print '\t\t beta = '
+        print '\t\t', vbeta
+        print '\t\t alpha = '
+        print '\t\t', valpha
+
+        print '\t expected nLogLikelihood = ', optfval_nq1, '+', optfval_nq2, \
+            '=', (optfval_nq1 + optfval_nq1)
+
+        betaDiffNorm = np.linalg.norm(vbeta - vbeta_old)
+        alphaDiffNorm = np.linalg.norm(valpha - valpha_old)
+
+        print '\t Changes in parameters:'
+        print '\t\t beta = ', betaDiffNorm
+        print '\t\t alpha = ', alphaDiffNorm
+
+        nollkfval = nollk(param)
+
+        print '\t negative oLoglikelihood =', nollkfval
+
+        nollkfvaldiff = nollkfval - nollkfval_old
+
+        print '\t\t Change in negative oLoglikelihood =', nollkfvaldiff
+
+        nollkfvalabsdiff = np.abs(nollkfvaldiff)
+
+        # if betaDiffNorm < eps1 and alphaDiffNorm < eps1 and nollkfvalabsdiff < eps2:
+        if nollkfvalabsdiff < eps2:
+            break
+        else:
+            param_old = param
+            nollkfval_old = nollkfval
+
+    # return {'param': param, 'fval': fval, 'nit': nIter}
+    return {'param':param, 'nollk':nollkfval, 'nit':nIter}
 
 
 def mixedLogistic_EMtrain(param0, c, y, xm, xr, m):
@@ -100,8 +169,8 @@ def mixedLogistic_EMtrain(param0, c, y, xm, xr, m):
         print param
         print 'expected nLogLikelihood =', optfval
 
-        betaNorm = np.linalg.norm(beta - beta_old)
-        alphaNorm = np.linalg.norm(alpha - alpha_old)
+        betaDiffNorm = np.linalg.norm(beta - beta_old)
+        alphaDiffNorm = np.linalg.norm(alpha - alpha_old)
         # optfvaldiff = np.abs(optfval - optfval_old)
 
         nollkfval = nollk(param)
@@ -113,7 +182,7 @@ def mixedLogistic_EMtrain(param0, c, y, xm, xr, m):
         # print 'expected nLogLikelihood change =', fval - fval_old
 
         # if betaNorm < eps1 and alphaNorm < eps1 and fvaldiff < eps2:
-        if betaNorm < eps1 and alphaNorm < eps1 and nollkfvalabsdiff < eps2:
+        if betaDiffNorm < eps1 and alphaDiffNorm < eps1 and nollkfvalabsdiff < eps2:
             break
         else:
             param_old = param
