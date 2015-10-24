@@ -46,40 +46,22 @@ class MixedLogisticDataSimulator(object):
 
     # set hidden layer coefficients
     def _setAlpha(self):
-        # _alpha = (np.arange(self.dxm) + 1) * np.power(10., np.arange(self.dxm) - self.dxm / 2)
-        #
-        # # _alpha = np.ones(self.dxm) * np.power(10., np.arange(self.dxm) - self.dxm / 2)
-        # alpha = []
-        # for i in range(self.c - 1):
-        #     alpha.append(_alpha)
-        #     _alpha = np.delete(np.append(_alpha, _alpha[0]), 0)
-        # return np.vstack(alpha).T
-        return np.array([[0., 0.]])  # hidden membership probabilities = 1/3
+        # return np.array([[0., 0.]])  # hidden membership probabilities = 1/3
+        return np.array([[5., 0.]])
 
     # set observed layer coefficients
     def _setBeta(self):
-        # _beta = (np.arange(self.dxr) + 1) * np.power(10., np.arange(self.dxr) - self.dxr / 2)
-        #
-        # # _beta = np.ones(self.dxr) * np.power(10., np.arange(self.dxr) - self.dxr / 2)
-        # beta = []
-        # for i in range(self.c):
-        #     beta.append(_beta)
-        #     _beta = np.delete(np.append(_beta, _beta[0]), 0)
-        # return np.vstack(beta).T
         return np.array([[-5., 0., 5.]])
 
 
     # set hidden layer intercepts
     def _set_a(self):
-        # return (np.arange(self.c - 1) + 1) * 0.5
-        # return np.arange(self.c - 1) * 5.
         return np.array([0., 0.])
 
     # set observed layer intercepts
     def _set_b(self):
-        # return (np.arange(self.c) + 1) * -0.5
-        # return np.arange(self.c) * -5.
-        return np.array([0., 0., 0.])
+        # return np.array([0., 0., 0.])
+        return np.array([-1., 0., 1.])
 
     def _setXm(self):
         return np.random.uniform(-2, 2, self.n * self.dxm).reshape((self.n, self.dxm), order='F')
