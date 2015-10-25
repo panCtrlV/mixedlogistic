@@ -102,7 +102,6 @@ class Paramters(object):
         :return: flattened hidden layer parameters
         """
         if self.hasHiddenIntercepts:
-            # return np.hstack([self.a, self.Alpha.flatten(order='F')])
             return np.vstack([self.a, self.Alpha]).flatten(order='F')  # new flatten order
         else:
             return self.Alpha.flatten(order='F')
