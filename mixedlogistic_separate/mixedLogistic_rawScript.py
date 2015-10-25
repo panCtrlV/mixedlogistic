@@ -181,6 +181,7 @@ def generateNegQAndGradientFunctions(data, params_old):
     """
     # number of leading terms in vparams are intercepts
     hasHiddenIntercepts = params_old.hasHiddenIntercepts
+
     if hasHiddenIntercepts:
         offset = params_old.Alpha.shape[1]
     else:
@@ -197,22 +198,26 @@ def generateNegQAndGradientFunctions(data, params_old):
 
     def negHiddenLayerQ(vparams):
         # map flattened paramters to matrix
-        if offset:
-            a = vparams[:offset]
-            Alpha = vparams[offset:].reshape((dxm, offset), order='F')
-        else:
-            a = None
-            Alpha = vparams.reshape((dxm, offset), order='F')
+        # if offset:
+        #     a = vparams[:offset]
+        #     Alpha = vparams[offset:].reshape((dxm, offset), order='F')
+        # else:
+        #     a = None
+        #     Alpha = vparams.reshape((dxm, offset), order='F')
+
+        a, Alpha = params_old.getHiddenParametersFromFlatInput(vparams)  # with new flatten order
 
         logMemberProbs = softmaxForData(data.Xm, Alpha, a, returnLog=True)
         return -np.multiply(weights, logMemberProbs).sum()
 
     def negObservedLayerQj(vparams, j):
-        if hasObservedIntercepts:
-            bj = vparams[0]  # first parameter is the coefficient
-            betaj = vparams[1:]
-        else:
-            betaj = vparams
+        # if hasObservedIntercepts:
+        #     bj = vparams[0]  # first parameter is the coefficient
+        #     betaj = vparams[1:]
+        # else:
+        #     betaj = vparams
+
+        bj, betaj = params_old.getObservedParametersFromFlatInput_j(vparams)
 
         choosingProbsj = sigmoidForData(data.Xr, betaj, bj)
         if isinstance(m, int):
@@ -227,30 +232,37 @@ def generateNegQAndGradientFunctions(data, params_old):
 
     def negHiddenLayerQ_grad(vparams):
         # map flattened paramters to matrix
-        if offset:
-            a = vparams[:offset]
-            Alpha = vparams[offset:].reshape((dxm, offset), order='F')
-        else:
-            a = None
-            Alpha = vparams.reshape((dxm, offset), order='F')
+        # if offset:
+        #     a = vparams[:offset]
+        #     Alpha = vparams[offset:].reshape((dxm, offset), order='F')
+        # else:
+        #     a = None
+        #     Alpha = vparams.reshape((dxm, offset), order='F')
+
+        a, Alpha = params_old.getHiddenParametersFromFlatInput(vparams)
 
         memberProbs = softmaxForData(data.Xm, Alpha, a)
         qMinusPi = weights[:, :-1] - memberProbs[:, :-1]
-        gradAlpha = data.Xm.T.dot(qMinusPi).flatten(order='F')
+        # gradAlpha = data.Xm.T.dot(qMinusPi).flatten(order='F')
+        gradAlpha = data.Xm.T.dot(qMinusPi)  # new flatten order
         if hasHiddenIntercepts:
             gradIntercepts = qMinusPi.sum(axis=0)
-            return -np.hstack([gradIntercepts, gradAlpha])
+            # return -np.hstack([gradIntercepts, gradAlpha])
+            return -np.vstack([gradIntercepts, gradAlpha]).flatten(order='F')  # new flatten order
         else:
-            return -gradAlpha
+            # return -gradAlpha
+            return -gradAlpha.flatten(order='F')  # new flatten order
 
     def negObservedLayerQj_grad(vparams, j):
         # prepare parameters
-        if hasObservedIntercepts:
-            bj = vparams[0]  # first parameter is the coefficient
-            betaj = vparams[1:]
-        else:
-            bj = None
-            betaj = vparams
+        # if hasObservedIntercepts:
+        #     bj = vparams[0]  # first parameter is the coefficient
+        #     betaj = vparams[1:]
+        # else:
+        #     bj = None
+        #     betaj = vparams
+
+        bj, betaj = params_old.getObservedParametersFromFlatInput_j(vparams)
 
         choosingProbs = sigmoidForData(data.Xr, betaj, bj)
         # print choosingProbs
@@ -286,8 +298,9 @@ def trainEM(data, params0, optMethod='L-BFGS-B', maxIter=500):
     dxm = params0.dxm
     hasHiddenIntercepts = params0.hasHiddenIntercepts
     hasObservedIntercepts = params0.hasObservedIntercepts
-    if hasHiddenIntercepts:
-        offset = params0.Alpha.shape[1]
+
+    # if hasHiddenIntercepts:
+    #     offset = params0.Alpha.shape[1]
 
     params_old = params0
     nollk_old = negObservedLogLikelihood(data, params_old)
@@ -304,28 +317,40 @@ def trainEM(data, params0, optMethod='L-BFGS-B', maxIter=500):
         vHiddenLayerParameters_old = params_old.flattenHiddenLayerParameters()
         updateNegQ1 = optimize.minimize(fNegQ1, vHiddenLayerParameters_old,
                                         method=optMethod, jac=gradNegQ1)
-        if hasHiddenIntercepts:
-            a = updateNegQ1.x[:offset]
-            Alpha = updateNegQ1.x[offset:].reshape((dxm, offset), order='F')
-        else:
-            a = None
-            Alpha = updateNegQ1.x[offset:].reshape((dxm, offset), order='F')
 
-        updateNegQ2 = []
+        # ... check fNegQ1 to accommodate the now order of the flattened hidden parameters ...
+
+        # if hasHiddenIntercepts:
+        #     a = updateNegQ1.x[:offset]
+        #     Alpha = updateNegQ1.x[offset:].reshape((dxm, offset), order='F')
+        # else:
+        #     a = None
+        #     Alpha = updateNegQ1.x[offset:].reshape((dxm, offset), order='F')
+
+        a, Alpha = params_old.getHiddenParametersFromFlatInput(updateNegQ1.x)
+
+        # updateNegQ2 = []
+        bjs = []  # modification
+        betajs = []  # modification
         # print("\t Optimizing observed layer ...")
         for j in xrange(c):
             # print("\t\t component %d ..." % j)
             vObservedLayerParameterj_old = params_old.flattenObservedLayerParametersj(j)
             updateNegQ2j = optimize.minimize(fNegQ2j, vObservedLayerParameterj_old,
                                              args=(j, ), method=optMethod, jac=gradNegQ2j)
-            updateNegQ2.append(updateNegQ2j)
+            # updateNegQ2.append(updateNegQ2j)
+            bjs.append(updateNegQ2j.x[0])  # modification
+            betajs.append(updateNegQ2j.x[1])  # modification
 
-        if hasObservedIntercepts:
-            b = np.array([params.x[0] for params in updateNegQ2])
-            Beta = np.vstack([params.x[1:] for params in updateNegQ2]).T
-        else:
-            b = None
-            Beta = np.vstack([params.x for params in updateNegQ2]).T
+        # if hasObservedIntercepts:
+        #     b = np.array([params.x[0] for params in updateNegQ2])
+        #     Beta = np.vstack([params.x[1:] for params in updateNegQ2]).T
+        # else:
+        #     b = None
+        #     Beta = np.vstack([params.x for params in updateNegQ2]).T
+
+        b = None if all(bj is None for bj in bjs) else np.array(bjs)
+        Beta = np.vstack(betajs).T
 
         # print '\t updated parameters: '
         # print '\t\t Alpha = '

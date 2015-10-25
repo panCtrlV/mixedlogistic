@@ -102,8 +102,8 @@ class Paramters(object):
         :return: flattened hidden layer parameters
         """
         if self.hasHiddenIntercepts:
-            return np.vstack([self.a, self.Alpha]).flatten(order='F')
             # return np.hstack([self.a, self.Alpha.flatten(order='F')])
+            return np.vstack([self.a, self.Alpha]).flatten(order='F')  # new flatten order
         else:
             return self.Alpha.flatten(order='F')
 
@@ -173,11 +173,26 @@ class Paramters(object):
         """
         return OrderedParameters(self.Alpha, self.Beta, self.a, self.b, trueParameters)
 
-    def getAlphaFromFlatInput(self, flatAlpha):
-        pass
+    def getHiddenParametersFromFlatInput(self, flatAlpha):
+        # users should provide a valid input
+        reshapedAlpha = flatAlpha.reshape((self.dxm + 1, self.c - 1), order='F')
+        if self.hasHiddenIntercepts:
+            a = reshapedAlpha[0, :]
+            Alpha = reshapedAlpha[1:, :]
+        else:
+            a = None
+            Alpha = reshapedAlpha
+        return a, Alpha
 
-    def getBetajFromFlatInput(self, flatBetaj):
-        pass
+    def getObservedParametersFromFlatInput_j(self, flatBetaj):
+        # users must provide a valid flat input
+        if self.hasObservedIntercepts:
+            bj = flatBetaj[0]
+            betaj = flatBetaj[1:]
+        else:
+            bj = None
+            betaj = flatBetaj
+        return bj, betaj
 
     def __str__(self):
         line1 = "Hidden Layer:"

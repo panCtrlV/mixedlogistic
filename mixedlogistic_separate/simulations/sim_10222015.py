@@ -125,10 +125,11 @@ b0 = np.random.uniform(2, 5, size=params.b.shape)
 params0 = Paramters(Alpha0, Beta0, a0, b0)
 
 # Train
-res = trainEM(data, params0, maxIter=10000)
+res = trainEM(data, params0, maxIter=20000)
 
 # Compare true and estimated parameters
 est_parameters = res['params']
+est_parameters = est_parameters.getOrderedParameters(params)
 print params, '\n'
 print est_parameters
 
