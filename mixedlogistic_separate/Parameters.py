@@ -91,15 +91,19 @@ class Paramters(object):
     # This method is not intended to be inherited
     def flattenHiddenLayerParameters(self):
         """
-        Squeeze / flatten hidden layer parameters such that the intercepts (if `a` is not None)
-        comes before the coefficients (`Alpha`) which are stacked by columns. This is shown below:
+        Squeeze / flatten hidden layer parameters such that the intercept (if `a` is not None)
+        comes before the coefficients (`Alpha`) within each group. Then the grouped parameters
+        are concatenated. This is shown below:
 
-            a, Alpha => [a_1, a_2, ..., Alpha_{11}, Alpha_{12}, ..., Alpha_{21}, Alpha_{22}, ...]
+            a, Alpha => [a_1, Alpha_{11}, Alpha_{12}, ...,
+                         a_2, Alpha_{21}, Alpha_{22}, ..., ,
+                         ...]
 
         :return: flattened hidden layer parameters
         """
         if self.hasHiddenIntercepts:
-            return np.hstack([self.a, self.Alpha.flatten(order='F')])
+            return np.vstack([self.a, self.Alpha]).flatten(order='F')
+            # return np.hstack([self.a, self.Alpha.flatten(order='F')])
         else:
             return self.Alpha.flatten(order='F')
 
@@ -125,7 +129,7 @@ class Paramters(object):
         Create a flatten list of the parameters in the model. The concatenation order is given
         as follows:
 
-            a, Alpha, b1, Beta[:,1], b2, Beta[:, 2], ...
+            a1, Alpha1, a2, Alpha2, ..., b1, Beta1, b2, Beta2, ...
 
         :return: flattened model parameters
         """
@@ -168,6 +172,12 @@ class Paramters(object):
         :return: an OrderedParameters object encapsulating the re-ordered parameters.
         """
         return OrderedParameters(self.Alpha, self.Beta, self.a, self.b, trueParameters)
+
+    def getAlphaFromFlatInput(self, flatAlpha):
+        pass
+
+    def getBetajFromFlatInput(self, flatBetaj):
+        pass
 
     def __str__(self):
         line1 = "Hidden Layer:"
