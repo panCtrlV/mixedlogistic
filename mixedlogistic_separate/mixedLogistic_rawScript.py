@@ -97,13 +97,6 @@ def softmaxForData(X, Coef, intercepts=None, addDefaultBase=True, returnLog=Fals
     return softmax(linearTerms, addDefaultBase, returnLog=returnLog)
 
 
-##################
-# Data Simulator #
-##################
-
-# Moved to dataSimulator.py
-
-
 ####################################################
 # Posterior (Conditional) Membership Probabilities #
 ####################################################
@@ -300,7 +293,7 @@ def trainEM(data, params0, optMethod='L-BFGS-B', maxIter=500):
             updateNegQ2j = optimize.minimize(fNegQ2j, vObservedLayerParameterj_old,
                                              args=(j, ), method=optMethod, jac=gradNegQ2j)
             bjs.append(updateNegQ2j.x[0])
-            betajs.append(updateNegQ2j.x[1])
+            betajs.append(updateNegQ2j.x[1:])
         # format observed layer parameters
         b = None if all(bj is None for bj in bjs) else np.array(bjs)
         Beta = np.vstack(betajs).T
@@ -318,6 +311,9 @@ def trainEM(data, params0, optMethod='L-BFGS-B', maxIter=500):
         #     print b
 
         params = Paramters(Alpha, Beta, a, b)
+
+        # print params
+
         paramsDiffNorm = params.normedDifference(params_old)
         print '\t Changes in parameters (L2 norm) = ', paramsDiffNorm
 

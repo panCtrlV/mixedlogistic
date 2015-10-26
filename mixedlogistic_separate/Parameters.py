@@ -262,6 +262,7 @@ class OrderedParameters(Paramters):
                                 [self.getParameters(1, i), self.getParameters(2, i)]
                             ) for i in (np.arange(self.c) + 1)
                         )
+        # print thisParamsMtx
         trueParamsMtx = np.vstack(
                             np.hstack(
                                 [trueParameters.getParameters(1, i), trueParameters.getParameters(2, i)]
@@ -270,15 +271,22 @@ class OrderedParameters(Paramters):
 
         # For each estimated group, calculate L2 norm against all true groups
         l2_dist = []
-        for i in range(self.c):
+        for i in range(self.c):  # iterate over each group of the estimated parameters
             l2_dist_i = []
-            for j in range(self.c):
+            for j in range(self.c):  # against each group of true parameters
                 l2_dist_i.append(np.linalg.norm(thisParamsMtx[i, :] - trueParamsMtx[j, :]))
             l2_dist.append(l2_dist_i)
 
         # Find groups each estimates should belong
         l2_dist_array = np.array(l2_dist)
-        groupIndices = l2_dist_array.argmin(axis=0)
+
+        # The following for loop is needed to avoid group id conflict.
+        groupIndices = []
+        for i in range(self.c):
+            minCol = l2_dist_array[i, :].argmin()
+            groupIndices.append(minCol)
+            if i < self.c - 1:
+                l2_dist_array[i+1:, minCol] = l2_dist_array[i+1:, :].max(axis=1) * 2.
 
         # Re-order parameters among groups
         aWithBaseGroup = np.append(self.a, 0.)

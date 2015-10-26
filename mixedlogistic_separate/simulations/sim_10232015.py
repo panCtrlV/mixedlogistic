@@ -1,6 +1,10 @@
 from mixedlogistic_separate.DataSimulators import *
 
 
+"""
+Simulation study to investigate the Fisher information for the model.
+"""
+
 dxm = 0
 dxr = 0
 
