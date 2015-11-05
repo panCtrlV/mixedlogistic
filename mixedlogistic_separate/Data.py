@@ -1,13 +1,21 @@
 class Data(object):
-    def __init__(self, Xm, Xr, y, m):
+    def __init__(self, Xm, Xr, y, m=1):
+        """
+
+        :param Xm: hidden layer covariates
+        :param Xr: observed layer covariates
+        :param y: response
+        :param m: number of trials, default is 1
+        :return: nothing
+        """
         self.Xm = Xm
         self.Xr = Xr
         self.y = y
         self.m = m
-        self.n = len(y)
+        self.n = len(y)  # sample size
 
     def _formatArray(self, x):
-        if self.n < 5:
+        if self.n < 6:
             return '\n'.join('{}:\t{}'.format(*example) for example in enumerate(x))
         else:
             s1 = '\n'.join('{}:\t{}'.format(*example) for example in enumerate(x[:3]))

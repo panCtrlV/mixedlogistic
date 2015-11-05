@@ -1,4 +1,4 @@
-from mixedLogistic_rawScript import *
+from mixedlogistic_separate.mixedLogistic_rawScript import *
 
 
 class MixedLogisticDataSimulator(object):
@@ -33,16 +33,14 @@ class MixedLogisticDataSimulator(object):
 
     # set observed layer coefficients
     def _setBeta(self):
-        # _beta = (np.arange(self.dxr) + 1) * np.power(10., np.arange(self.dxr) - self.dxr / 2)
-
+        _beta = (np.arange(self.dxr) + 1) * np.power(10., np.arange(self.dxr) - self.dxr / 2)
         # _beta = np.ones(self.dxr) * np.power(10., np.arange(self.dxr) - self.dxr / 2)
-        # beta = []
-        # for i in range(self.c):
-        #     beta.append(_beta)
-        #     _beta = np.delete(np.append(_beta, _beta[0]), 0)
-        # return np.vstack(beta).T
-
-        return np.array([[0.1, 5, 14], [14, 0.1, 5], [5, 14, 0.1]]).T  # 10-19-2015
+        beta = []
+        for i in range(self.c):
+            beta.append(_beta)
+            _beta = np.delete(np.append(_beta, _beta[0]), 0)
+        return np.vstack(beta).T
+        # return np.array([[0.1, 5, 14], [14, 0.1, 5], [5, 14, 0.1]]).T  # 10-19-2015
 
     # set hidden layer intercepts
     def _set_a(self):

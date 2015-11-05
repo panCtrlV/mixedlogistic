@@ -48,6 +48,9 @@ class Paramters(object):
         self.hasObservedIntercepts = b is not None
         self.dxm = Alpha.shape[0]
         self.dxr, self.c = Beta.shape  # number of hidden groups
+        self.pHiddenLayer = self.dxm if a is None else self.dxm + 1
+        self.pObservedLayer = self.dxr if b is None else self.dxr + 1
+        self.numberOfParameters = self.pHiddenLayer * (self.c - 1) + self.pObservedLayer * self.c
 
     def getParameters(self, layer, groupNumber):
         """

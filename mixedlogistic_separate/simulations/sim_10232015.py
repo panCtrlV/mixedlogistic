@@ -1,4 +1,4 @@
-from mixedlogistic_separate.DataSimulators import *
+from mixedlogistic_separate.dataSimulators import *
 
 
 """
