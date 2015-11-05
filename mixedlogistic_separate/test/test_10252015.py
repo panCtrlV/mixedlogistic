@@ -1,4 +1,4 @@
-from mixedlogistic_separate.dataSimulators import *
+from mixedlogistic_separate.DataSimulators import *
 
 
 simulator = MixedLogisticDataSimulator(5000, 3, 3, 3)
